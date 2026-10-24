@@ -1,0 +1,13 @@
+# Harness: baselines, model loop, verifier and hidden cases. Never shares a filesystem with the sandbox.
+FROM python:3.12-slim
+WORKDIR /app
+ENV PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    PIP_DEFAULT_TIMEOUT=120 \
+    PIP_RETRIES=10 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
+COPY requirements.txt .
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip install -r requirements.txt
+COPY harness ./harness
+CMD ["python", "-m", "harness.run"]

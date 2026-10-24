@@ -1,0 +1,48 @@
+# One command runs everything (build, oracle check, no-op check, model run):
+#   docker compose up --build --abort-on-container-exit --exit-code-from harness
+name: rl-env
+
+services:
+  sandbox:                         # the only place agent code runs
+    build:
+      context: .
+      dockerfile: Dockerfile.sandbox
+    networks: [isolated]           # internal network: no route to the internet
+    init: true
+    cap_drop: [ALL]
+    cap_add: [CHOWN, DAC_OVERRIDE, FOWNER, KILL, SETUID, SETGID]   # only to run tools as uid 1001
+    security_opt: ["no-new-privileges:true"]
+    pids_limit: 256
+    mem_limit: 1g
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  harness:                         # verifier, hidden cases, baselines, model loop
+    build:
+      context: .
+      dockerfile: Dockerfile.harness
+    depends_on:
+      sandbox:
+        condition: service_healthy
+    networks: [isolated, internet] # sandbox + model API
+    environment:
+      MODEL: ${MODEL:-mock/solver}
+      API_KEY: ${API_KEY:-}
+      BASE_URL: ${BASE_URL:-}
+      MAX_TOKENS: ${MAX_TOKENS:-}
+      TASK_ID: ${TASK_ID:-slugify}
+      SEED: ${SEED:-0}
+      MODE: ${MODE:-full}
+      APPEND_FILE: ${APPEND_FILE:-}
+      SANDBOX_URL: http://sandbox:8000
+    volumes:
+      - ./logs:/app/logs
+      - ./inputs:/app/inputs:ro
+
+networks:
+  isolated:
+    internal: true
+  internet: {}

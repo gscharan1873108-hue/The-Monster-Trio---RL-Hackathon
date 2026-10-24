@@ -1,0 +1,8 @@
+.git
+.env
+logs
+tests
+submission
+__pycache__
+*.pyc
+*.pdf

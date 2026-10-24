@@ -1,0 +1,13 @@
+# Sandbox: runs the agent's tools as an unprivileged user. No internet (see docker-compose.yml).
+FROM python:3.12-slim
+RUN useradd --no-create-home --uid 1001 --shell /usr/sbin/nologin agent \
+ && mkdir /workspace /opt/sandbox \
+ && chown agent:agent /workspace \
+ && chmod 0700 /opt/sandbox
+COPY sandbox/server.py /opt/sandbox/server.py
+RUN chmod 0600 /opt/sandbox/server.py
+WORKDIR /workspace
+ENV PYTHONUNBUFFERED=1 PYTHONDONTWRITEBYTECODE=1 AGENT_UID=1001 AGENT_GID=1001
+EXPOSE 8000
+# Runs as root only to drop each tool process to uid 1001; the agent never gets root.
+CMD ["python", "/opt/sandbox/server.py"]

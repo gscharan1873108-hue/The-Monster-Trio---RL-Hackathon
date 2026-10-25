@@ -5,11 +5,11 @@ import sys
 import openai
 
 client = openai.OpenAI(
-    api_key="sk-FHD0uNiADcWueAHcYfs6lQ",
-    base_url="https://litellm-hackathon.penpencil.guru"
+    api_key=os.getenv("API_KEY"),
+    base_url=os.getenv("BASE_URL")
 )
 response = client.chat.completions.create(
-    model="gpt-6-luna",
+    model=os.getenv("MODEL"),
     messages=[{"role": "user", "content": "Hi, How are you?"}],
 )
 print(response)

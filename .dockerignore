@@ -6,3 +6,4 @@ submission
 __pycache__
 *.pyc
 *.pdf
+.venv
